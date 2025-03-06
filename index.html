@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            width: 50%;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2d3e50;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #444;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[type="number"] {
+            background-color: #f9f9f9;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            display: none;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fraud Detection</h1>
+
+        <div class="form-group">
+            <label for="step">Step:</label>
+            <input type="number" id="step" placeholder="Enter step (e.g., 1)" required>
+        </div>
+
+        <div class="form-group">
+            <label for="amount">Transaction Amount:</label>
+            <input type="number" id="amount" placeholder="Enter transaction amount" required>
+        </div>
+
+        <div class="form-group">
+            <label for="bal_before">Balance Before Transaction:</label>
+            <input type="number" id="bal_before" placeholder="Enter balance before transaction" required>
+        </div>
+
+        <div class="form-group">
+            <label for="bal_after">Balance After Transaction:</label>
+            <input type="number" id="bal_after" placeholder="Enter balance after transaction" required>
+        </div>
+
+        <div class="form-group">
+            <label for="bal_of_recepient_before">Recepient Balance Before Transaction:</label>
+            <input type="number" id="bal_of_recepient_before" placeholder="Enter recepient balance before transaction" required>
+        </div>
+
+        <div class="form-group">
+            <label for="bal_of_receipient_after">Receipient Balance After Transaction:</label>
+            <input type="number" id="bal_of_receipient_after" placeholder="Enter recepient balance after transaction" required>
+        </div>
+
+        <div class="form-group">
+            <label for="is_flagged_fraud">Flagged as Fraud:</label>
+            <select id="is_flagged_fraud">
+                <option value="1">Yes</option>
+                <option value="0" selected>No</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="transaction_type">Transaction Type:</label>
+            <select id="transaction_type">
+                <option value="CASH_IN">Cash In</option>
+                <option value="CASH_OUT" selected>Cash Out</option>
+                <option value="DEBIT">Debit</option>
+                <option value="PAYMENT">Payment</option>
+                <option value="TRANSFER">Transfer</option>
+            </select>
+        </div>
+
+        <button onclick="predictFraud()">Predict</button>
+
+        <div id="output"></div>
+    </div>
+
+    <script>
+        async function predictFraud() {
+            const transactionType = document.getElementById("transaction_type").value;
+            
+            const formData = {
+                step: parseInt(document.getElementById("step").value),
+                amount: parseFloat(document.getElementById("amount").value),
+                bal_before_transaction: parseFloat(document.getElementById("bal_before").value),
+                bal_after_transaction: parseFloat(document.getElementById("bal_after").value),
+                bal_of_recepient_before_transaction: parseFloat(document.getElementById("bal_of_recepient_before").value),
+                bal_of_receipient_after_transaction: parseFloat(document.getElementById("bal_of_receipient_after").value),
+                is_flagged_fraud: parseInt(document.getElementById("is_flagged_fraud").value),
+                type_CASH_IN: transactionType === "CASH_IN" ? 1 : 0,
+                type_CASH_OUT: transactionType === "CASH_OUT" ? 1 : 0,
+                type_DEBIT: transactionType === "DEBIT" ? 1 : 0,
+                type_PAYMENT: transactionType === "PAYMENT" ? 1 : 0,
+                type_TRANSFER: transactionType === "TRANSFER" ? 1 : 0
+            };
+
+            console.log("Form Data: ", formData); // Log the form data
+
+            try {
+                const response = await fetch("http://127.0.0.1:5000/predict", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify([formData]) // Send data as an array
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP Error ${response.status}`);
+                }
+
+                const result = await response.json();
+                const outputDiv = document.getElementById("output");
+                outputDiv.style.display = "block"; // Show the output div
+                outputDiv.innerText = `Prediction: ${result.predictions[0] === 1 ? "Fraudulent" : "Not Fraudulent"}`;
+            } catch (error) {
+                const outputDiv = document.getElementById("output");
+                outputDiv.style.display = "block"; // Show the error div
+                outputDiv.innerText = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
